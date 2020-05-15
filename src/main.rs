@@ -1,40 +1,29 @@
-use std::sync::mpsc;
-use std::thread;
-use std::time::Duration;
+extern crate minidirb;
+
+use std::env;
+use std::process;
+use minidirb::Config;
+
 
 fn main() {
-    
-    let (tx, rx) = mpsc::channel();
+    let args: Vec<String> = env::args().collect();
+    println!("{:?}",args);
 
-    let tx1 = mpsc::Sender::clone(&tx);
-
-    thread::spawn(move ||{
-        let vals = vec![
-            String::from("hi"),
-            String::from("from"),
-            String::from("the thread"),
-        ];
-        for val in vals{
-           tx.send(val).unwrap(); 
-           thread::sleep(Duration::from_secs(1));
-        }
-        
+    let config = Config::new(&args).unwrap_or_else(|err |{
+        println!("parsing problem");
+        process::exit(1);
     });
 
-    thread::spawn(move ||{
-        let vals = vec![
-            String::from("more"),
-            String::from("messages"),
-            String::from("for you."),
-        ];
+    println!("searching for {} in {}", config.query, config.filename);
 
-        for val in vals{
-            tx1.send(val).unwrap();
-            thread::sleep(Duration::from_secs(1));
-        }
-    });
-
-    for recieved in rx{
-    println!("Got: {:?}", recieved);
+    if let Err(e) = minidirb::run(config){
+        println!("application error");
+        process::exit(1);
     }
-}
+    
+    
+    }
+
+
+
+
